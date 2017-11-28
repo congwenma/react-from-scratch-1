@@ -43,6 +43,7 @@
         mount(App); // BETTER: removed setting to `const app`
 
         function mount(Component, props) {
+            debugger
             const randomCount = parseInt(Math.random() * 100);
             // WARN: meant to use {component}
             // NOTE: invokes `ReactDOM.render` on <App/>
@@ -53,7 +54,6 @@
         }
 
         document.getElementById('unmount').addEventListener('click', function() {
-          debugger
             ReactDOM.unmountComponentAtNode(document.getElementById('app'))
         });
 

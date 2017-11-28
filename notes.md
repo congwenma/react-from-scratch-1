@@ -57,5 +57,38 @@ myComponent.setState(Object nextState) ->
     4. DONE~~~
 ```
 
-## Mount
+## Mount (Complex)
 
+```js
+ReactDOM.render(Element element, DOMNode container) ->
+  1. Check if container is already mounted by asking for `container.firstChild._internalInstance`, if found, call `instance.receive(element)` to perform an update and returns
+
+  2. construct `rootComponent` by calling `instantiateComponent(element)`
+    2.1 check if the element is <CompositeComponent> or <DOMComponent>
+    2.2 builds the corresponding Component and return it
+
+  3. mount `rootComponent` and get the <DOMNode> returned
+    3.1 computes `renderedElement` = if rootComponent instanceof CompositeComponent
+      3.1.1 grab `currentElement`
+
+      3.1.2 if `currentElement.type` is ReactComponent, construct a ReactComponent
+        3.1.2.1 construct `@publicInstance`
+        3.1.2.2 set internal instance,`@publicInstance._reactInternalInstance = this`
+        3.1.2.3 invoke `componentWillMount` on `@publicInstance` if exist
+        3.1.2.4 set `renderedElement = @publicInstance.render()`
+
+      3.1.3 if `currentElement.type` is a function
+        3.1.3.1 construct a "function component", `renderedElement = type(props)`
+
+    3.2 set `@rendereComponent` = instantiateComponent(renderedElement)
+
+    3.3 returns the mounted `@renderedComponent`
+    3.4 Recursion from 3.3 mounts all children elements.
+    3.5 DONE
+
+  4. set `_internalInstance` on the <DOMNode>
+
+  5. take that DOMNode from 4 and insert it into `container`
+
+  6. return `rootComponent`s public instance (not sure what that is for)
+```
