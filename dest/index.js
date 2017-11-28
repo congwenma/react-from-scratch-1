@@ -10,6 +10,7 @@ function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in ob
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+// NOTE: checks if {type} is a react class
 function isReactClass(type) {
   return type.prototype && type.prototype.isReactComponent;
 }
@@ -20,7 +21,7 @@ var CompositeComponent = function () {
 
     this.currentElement = element;
     // internal instance of rendered component, see mount();
-    // eg: const App = ()=> <Foo />; 
+    // eg: const App = ()=> <Foo />;
     // then appInternalInstance.renderedComponent will be fooInternalInstance
     this.renderedComponent = null;
     this.publicInstance = null;
@@ -37,6 +38,8 @@ var CompositeComponent = function () {
       // recursively get host node
       return this.renderedComponent.getHostNode();
     }
+    // NOTE: the update
+
   }, {
     key: 'receive',
     value: function receive(nextElement) {
@@ -70,7 +73,7 @@ var CompositeComponent = function () {
       if (nextRenderedElement.type === previousRenderedElement.type) {
         previousComponent.receive(nextRenderedElement);
       } else {
-        // otherwise, re-create renderedComponent instance 
+        // otherwise, re-create renderedComponent instance
         this.renderedComponent = instantiateComponent(nextRenderedElement);
 
         // get dom node of rendered tree
@@ -95,6 +98,9 @@ var CompositeComponent = function () {
 
       // es6 class
       if (isReactClass(type)) {
+        // NOTE: @publicSInstance becomes an <App> constructor that looks like
+        // NOTE:  {props, states, __proto__: { render, componentWillMount... }}
+        // NOTE:        -> basically what {this} is in render
         // create public instance
         this.publicInstance = new type(props);
         // record internal instance
@@ -108,6 +114,7 @@ var CompositeComponent = function () {
           componentWillMount.call(this.publicInstance);
         }
 
+        // NOTE: `renderedElement` schema: { type, props: { children ... } }
         // get renderedElement by call render method
         renderedElement = this.publicInstance.render();
       } else {
@@ -115,10 +122,13 @@ var CompositeComponent = function () {
         renderedElement = type(props);
       }
 
+      // NOTE: @recusion
       // * recursivly instatiate renderedElement and mount
       // since it could only be DOM node in the leaf of component tree
       // so the return value of recursive mount method will be DOM node.
       this.renderedComponent = instantiateComponent(renderedElement);
+
+      // NOTE: recusively invokes all its children and mounts them, eventually this will return <DOMNode> instances
       return this.renderedComponent.mount();
     }
   }, {
@@ -142,6 +152,8 @@ var DOMComponent = function () {
 
     this.currentElement = element;
     this.node = null;
+
+    // NOTE: @renderedChildren is stored, so they can be iteratively unmounted on `unmount`, and compared on `receive`
     this.renderedChildren = [];
   }
 
@@ -155,6 +167,9 @@ var DOMComponent = function () {
     value: function getHostNode() {
       return this.node;
     }
+
+    // NOTE: the update
+
   }, {
     key: 'receive',
     value: function receive(nextElement) {
@@ -201,7 +216,7 @@ var DOMComponent = function () {
           nextRenderedChildren.push(_nextChildComponent);
           node.replaceChild(_nextChildComponent.mount(), previousRenderedChildren[index].getHostNode());
         } else {
-          // update if child type is not text node and not changed 
+          // update if child type is not text node and not changed
           var previousRenderedComponent = previousRenderedChildren[index];
           nextRenderedChildren.push(previousRenderedComponent);
 
@@ -228,6 +243,7 @@ var DOMComponent = function () {
       var _this = this;
 
       var element = this.currentElement;
+      // NOTE: check if element is text node
       var isTextNodeElement = checkTextNodeElement(element);
       var node = void 0;
 
@@ -239,25 +255,32 @@ var DOMComponent = function () {
             children = _element$props.children,
             attributes = _objectWithoutProperties(_element$props, ['children']);
 
+        // NOTE: native
         // create dom node by tag
 
 
         node = document.createElement(type);
 
+        // NOTE: native set attribute
         // set attributes of dom node
         Object.keys(attributes).forEach(function (k) {
           node.setAttribute(k, attributes[k]);
         });
 
+        // WARN: what does this mean? test it out
         // tag without children like <input/> is not supported yet
         // recursively create instance for childrens
+        // WARN: note true in react, can return [] with `key`
         // CompositeComponent have only one child -- the component it **renders**: const Parent = ()=> <Child />
         // but HostComponent(DOMComponent) can have multiple children -- the components it **contains**: const App = ()=> <div><A/><B/><C/></div>
         children.forEach(function (child) {
+          // NOTE: child is <Element>, schema: { type, props: { children } }
           var childComponent = instantiateComponent(child);
           _this.renderedChildren.push(childComponent);
 
+          // NOTE: recursively call #mount on `childComponent` <DOM or Composite> and append to node NATIVELY
           // call mount to get dom node of child component recursively then append as child node
+          // NOTE: childComponent.mount() returns a DOM node
           node.appendChild(childComponent.mount());
         });
       }
@@ -311,13 +334,15 @@ window.React = {
       }
     }, {
       key: 'isReactComponent',
-      value: function isReactComponent() {
+      get: function get() {
         return true;
-      }
+      } // BETTER: changed to getter
+
     }]);
 
     return Component;
   }(),
+  // NOTE: creates a { type, props: { children, ... } } object
   createElement: function createElement(type, props) {
     for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
       children[_key - 2] = arguments[_key];
@@ -332,7 +357,14 @@ window.React = {
 };
 
 window.ReactDOM = {
+  // NOTE: @param {element} - { type, props: { children, ... } }
+  // NOTE: @param {container} - { DOM }
   render: function render(element, container) {
+
+    // NOTE: if container is not empty, has native DOM children
+    // NOTE: looks for `_internalInstance`<CompositeComponent> (set in this function),
+    // NOTE: then performs update
+    // NOTE:      -> basically performs update if rootNode.`firstChild` exists (already rendered)
     // Update if already mounted
     if (container.firstChild) {
       var instance = container.firstChild._internalInstance;
@@ -340,15 +372,18 @@ window.ReactDOM = {
       return;
     }
 
+    // NOTE: can either be `DOMComponent` or `CompositeComponent`, here though usually its latter
     // create component internal instance
     var rootComponent = instantiateComponent(element);
 
+    // NOTE: node instanceof <DOMNode>
     // create dom node tree
     var node = rootComponent.mount();
 
     // recored internalInstance on node so we can check & update the dom tree on re-render
     node._internalInstance = rootComponent;
 
+    // NOTE: Native DOM `appendChild`
     // append the dom tree to container
     container.appendChild(node);
 
@@ -361,5 +396,3 @@ window.ReactDOM = {
     container.innerHTML = '';
   }
 };
-
-//# sourceMappingURL=index.js.map

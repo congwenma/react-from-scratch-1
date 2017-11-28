@@ -1,3 +1,4 @@
+// NOTE: returns <App/> Component using window.React
 function getApp() {
   const { Component } = window.React;
   const { render } = window.ReactDOM;

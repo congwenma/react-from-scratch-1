@@ -39,12 +39,16 @@
 
     loadReact(urlParams.get('native')).then(() => {
         const App = getApp();
-        const app = mount(App);
+        // WARN: dont need app
+        mount(App); // BETTER: removed setting to `const app`
 
         function mount(Component, props) {
             const randomCount = parseInt(Math.random() * 100);
+            debugger
+            // WARN: meant to use {component}
+            // NOTE: invokes `ReactDOM.render` on <App/>
             return ReactDOM.render(
-                    React.createElement(Component, Object.assign({count: randomCount}, props)),
+                React.createElement(Component, Object.assign({count: randomCount}, props)),
                     document.getElementById('app')
             );
         }
