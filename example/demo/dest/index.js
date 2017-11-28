@@ -8,6 +8,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+// NOTE: returns <App/> Component using window.React
 function getApp() {
   var Component = window.React.Component;
   var render = window.ReactDOM.render;
@@ -63,6 +64,7 @@ function getApp() {
           var count = _this3.state.count;
 
           console.log('Interval callback is running: ', count);
+          debugger;
           _this3.setState({
             count: count + 1
           });

@@ -87,6 +87,9 @@ var CompositeComponent = function () {
         previousHostNode.parentNode.replaceChild(nextHostNode, previousHostNode);
       }
     }
+
+    // NOTE: returns DOM tree eventually
+
   }, {
     key: 'mount',
     value: function mount() {
@@ -174,10 +177,13 @@ var DOMComponent = function () {
     key: 'receive',
     value: function receive(nextElement) {
       var nextProps = nextElement.props;
+      // NOTE: Keeps a copy of `previousNode` and `previousProps`
+
       var previousProps = this.currentElement.props;
 
       var node = this.node;
 
+      // NOTE: update <Element> Tree
       this.currentElement = nextElement;
 
       // remove old attrs
@@ -200,11 +206,15 @@ var DOMComponent = function () {
       var previousRenderedChildren = this.renderedChildren;
       var nextRenderedChildren = [];
 
+      // WARN: lazier than React
+      // NOTE: recursively go through nextChildElement, see if exact match for each index in prevChildElement,
+      // NOTE: update / append / rebuild
       nextChildrenElements.forEach(function (nextChildElement, index) {
         var preChildElement = preChildrenElements[index];
 
         // replace child node if previous child is text node or type not match
         var needReplace = checkTextNodeElement(preChildElement) || nextChildElement.type !== preChildElement.type;
+        // NOTE: APPEND when no match detected
         if (!preChildElement) {
           //append new if previous child not exist
           var nextChildComponent = instantiateComponent(nextChildElement);
@@ -212,14 +222,18 @@ var DOMComponent = function () {
           node.appendChild(nextChildComponent.mount());
         } else if (needReplace) {
           // do replace if need
+          // NOTE: REPLACE when TypeMismatch or isTextNode
+          // NOTE: interesting `replaceChild` api: (new, old)
           var _nextChildComponent = instantiateComponent(nextChildElement);
           nextRenderedChildren.push(_nextChildComponent);
           node.replaceChild(_nextChildComponent.mount(), previousRenderedChildren[index].getHostNode());
         } else {
           // update if child type is not text node and not changed
+          // NOTE: UPDATE, find the previous Component on the same {index}, and push that for reuse, then call `Component#receive` on the next element tree for the update.
           var previousRenderedComponent = previousRenderedChildren[index];
           nextRenderedChildren.push(previousRenderedComponent);
 
+          // NOTE: recursion
           // call receive on renderedComponent to update recursively
           previousRenderedComponent.receive(nextChildElement);
         }
@@ -329,6 +343,7 @@ window.React = {
         this.state = Object.assign({}, this.state, nextState);
 
         if (reactComponent) {
+          // NOTE: at this point, `@state` is already updated, and `#render` will return the new <Element> tree
           reactComponent.renderedComponent.receive(this.render());
         }
       }
