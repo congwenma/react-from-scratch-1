@@ -7,7 +7,7 @@
   - Access with `this` or `this._reactInternalInstance.publicInstance`
 
 * internalInstance -
-  - <Component> type
+  - <Component> type, could be <Composite*> or <DOM*>
   - Access with `this._reactInternalInstance`
 
 * renderedComponent -
@@ -21,10 +21,23 @@
 
 # Major Scenarios
 
-## Mount
-
-
 ## Unmount
+```js
+ReactDOM.unmountComponentAtNode(DOMNode node) ->
+  1. find its first and only child's `internalInstance` and unmount it
+  2. calls `internalInstance.unmount`
+    2.1 if instance instanceof CompositeCoponent
+      2.1.1 if there is such a thing, run `instance.publicInstance.componentWillUnmount`
+      2.1.2 unmount `instance.renderedComponent`, which basically is`firstChild`
+      2.1.3 Recursion on 2.1.2 to 2 and unmounts all leaves
+
+    2.2 if instance instanceof DOMComponent
+      2.2.1 iterate all of `instance.renderedChildren` and unmount each of them
+      2.2.2 Recursion on 2.2.1 to 2 and unmounts all leaves
+
+    2.3. DONE
+  3. empties `innerHTML` on the `node`
+```
 
 
 ## SetState
@@ -41,5 +54,8 @@ myComponent.setState(Object nextState) ->
       receive
       3.3. Recusrively call children to receive (back to 3)
 
-    4. DONE
+    4. DONE~~~
 ```
+
+## Mount
+

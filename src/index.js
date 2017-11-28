@@ -100,6 +100,8 @@ class CompositeComponent {
     // NOTE: recusively invokes all its children and mounts them, eventually this will return <DOMNode> instances
     return this.renderedComponent.mount()
   }
+
+  // NOTE: call `componentWillUnmount` if there is such a thing, else unmount its renderedComponent
   unmount() {
     // call componentWillUnmount life-cycle if exist
     if (this.publicInstance && this.publicInstance.componentWillUnmount) {
@@ -198,6 +200,8 @@ class DOMComponent {
     this.renderedChildren = nextRenderedChildren;
 
   }
+
+  // NOTE: @returns node <DOMNode>
   mount() {
     const element = this.currentElement;
     // NOTE: check if element is text node
@@ -240,11 +244,12 @@ class DOMComponent {
     this.node = node;
     return this.node;
   }
+
+  // NOTE: unmount each of its renderedChildren [<Component>], recursion
   unmount() {
     this.renderedChildren.forEach((childComponent) => {
       childComponent.unmount()
     })
-
   }
 }
 
@@ -324,6 +329,8 @@ window.ReactDOM = {
     // get public instance see CompositeComponent & DOMComponent
     return rootComponent.getPublicInstance();
   },
+
+  // NOTE: simple enough, find its first and only `internalInstance` and unmount, then empty the container
   unmountComponentAtNode(container) {
     const instance = container.firstChild._internalInstance;
     instance.unmount();

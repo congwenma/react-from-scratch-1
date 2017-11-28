@@ -64,7 +64,6 @@ function getApp() {
           var count = _this3.state.count;
 
           console.log('Interval callback is running: ', count);
-          debugger;
           _this3.setState({
             count: count + 1
           });

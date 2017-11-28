@@ -25,7 +25,6 @@ function getApp() {
       this.timer = setInterval(() => {
         const { count } = this.state;
         console.log('Interval callback is running: ', count);
-        debugger
         this.setState({
           count: count + 1
         })

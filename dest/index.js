@@ -134,6 +134,9 @@ var CompositeComponent = function () {
       // NOTE: recusively invokes all its children and mounts them, eventually this will return <DOMNode> instances
       return this.renderedComponent.mount();
     }
+
+    // NOTE: call `componentWillUnmount` if there is such a thing, else unmount its renderedComponent
+
   }, {
     key: 'unmount',
     value: function unmount() {
@@ -251,6 +254,9 @@ var DOMComponent = function () {
 
       this.renderedChildren = nextRenderedChildren;
     }
+
+    // NOTE: @returns node <DOMNode>
+
   }, {
     key: 'mount',
     value: function mount() {
@@ -302,6 +308,9 @@ var DOMComponent = function () {
       this.node = node;
       return this.node;
     }
+
+    // NOTE: unmount each of its renderedChildren [<Component>], recursion
+
   }, {
     key: 'unmount',
     value: function unmount() {
@@ -405,6 +414,9 @@ window.ReactDOM = {
     // get public instance see CompositeComponent & DOMComponent
     return rootComponent.getPublicInstance();
   },
+
+
+  // NOTE: simple enough, find its first and only `internalInstance` and unmount, then empty the container
   unmountComponentAtNode: function unmountComponentAtNode(container) {
     var instance = container.firstChild._internalInstance;
     instance.unmount();
